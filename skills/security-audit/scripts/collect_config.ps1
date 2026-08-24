@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Claude Code の設定を読み取り専用で収集し、JSON で出力する。
 

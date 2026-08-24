@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import codecs
 import json
 import os
 import shutil
@@ -73,6 +74,17 @@ def run_powershell_collector(project_dir: Path) -> dict[str, Any]:
 
 def test_powershell_collector_exists() -> None:
     assert POWERSHELL_COLLECTOR.is_file()
+
+
+def test_powershell_collector_starts_with_utf8_bom() -> None:
+    """BOM が無いと Windows PowerShell 5.1 は ANSI コードページで読む。
+
+    日本語環境（CP932）では日本語コメント末尾のバイトが 2 バイト文字の
+    先行バイトと解釈され、直後の改行まで 1 文字として飲み込まれる。行が
+    連結してコメントが次のコード行を巻き込み、構文エラーになる。
+    CI の windows-latest は CP1252 なのでこの経路では検出できない。
+    """
+    assert POWERSHELL_COLLECTOR.read_bytes().startswith(codecs.BOM_UTF8)
 
 
 def test_both_collectors_are_shipped_with_the_skill() -> None:
