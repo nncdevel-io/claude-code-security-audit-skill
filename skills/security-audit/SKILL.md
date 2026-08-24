@@ -78,20 +78,23 @@ disable-model-invocation: true
 カレントディレクトリーを移動せず、このスキルのベースディレクトリー
 （冒頭に示されるパス）にあるスクリプトを絶対パスで実行する。
 
-収集スクリプトは 2 実装ある。**同じ JSON を返すので、環境にある方を使う。**
+収集スクリプトは 2 実装ある。**同じ JSON を返すので、環境に応じて使い分ける。**
 
-```bash
-# Python がある場合
-python3 "<スキルのベースディレクトリー>/scripts/collect_config.py" "<監査対象の絶対パス>"
-```
+Windows 環境では、Python の有無を確認せず、最初から PowerShell 版を使う。
 
 ```powershell
-# Python が無い場合（Windows の既定はこちら）
+# Windows の場合は常にこちら
 & "<スキルのベースディレクトリー>/scripts/collect_config.ps1" "<監査対象の絶対パス>"
 ```
 
-Python が入っているか分からない場合は Python 版を試し、失敗したら
-PowerShell 版に切り替える。どちらを使ったかはレポートの「収集状況」に書く。
+Windows 以外では Python 版を使う。
+
+```bash
+# Windows 以外の場合
+python3 "<スキルのベースディレクトリー>/scripts/collect_config.py" "<監査対象の絶対パス>"
+```
+
+どちらを使ったかはレポートの「収集状況」に書く。
 
 監査対象のパスは必ず引数で渡す。`$project_dir` が空のときは、省略せずに
 カレントディレクトリーの絶対パスを渡す。スクリプトの引数省略時の既定は
