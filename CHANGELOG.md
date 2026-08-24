@@ -12,6 +12,8 @@
 - OS 依存パスを `references/paths.json` へ外出し
 - `managed-settings.d` の断片と契約種別（`account`）の収集
 - 2 実装の出力を突き合わせるパリティテストと、`windows-latest` の CI ジョブ
+- `v<version>` タグの push で配布用アーカイブを作る CI ワークフロー。
+  タグと `plugin.json` の `version` が一致しないときは失敗させる
 
 ### 修正
 

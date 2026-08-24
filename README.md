@@ -4,7 +4,7 @@ Claude Code のセキュリティ設定を、公式セキュリティドキュ�
 要件ファイルと突合して監査し、改善方法を出すスキル。
 
 要件ファイルは生成物としてリポジトリーで管理し、公式ドキュメントの変更を
-GitHub Actions が週次で検知して更新のプルリクエストを作る。
+GitHub Actions が検知して更新のプルリクエストを作る。起動は手動。
 
 ## 構成
 
@@ -91,11 +91,16 @@ scripts/
 
 `dist/claude-code-security-audit-<version>.zip` ができる。
 
+CI でも同じものを作る。`.claude-plugin/plugin.json` の `version` と同じ名前で
+`v<version>` のタグを押すと、`.github/workflows/package.yml` が
+`scripts/package.sh` を実行し、アーカイブをワークフローの成果物として残す。
+タグとバージョンが食い違うときは、配る前に失敗させる。
+
 ## ベースラインの更新
 
 要件ファイルは手で書き換えず、次の流れで更新する。
 
-1. `.github/workflows/baseline-update.yml` が週次と手動起動で
+1. `.github/workflows/baseline-update.yml` を手動起動すると
    公式ドキュメントを取得し、SHA256 をスナップショットと比較する
 2. 変化があったときだけ、`baseline/generate.md` の手順に従って
    Claude が `requirements.md` を再生成する

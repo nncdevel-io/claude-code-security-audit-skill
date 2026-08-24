@@ -15,6 +15,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW_DIR = REPO_ROOT / ".github" / "workflows"
 CI_WORKFLOW = WORKFLOW_DIR / "ci.yml"
 BASELINE_WORKFLOW = WORKFLOW_DIR / "baseline-update.yml"
+PACKAGE_WORKFLOW = WORKFLOW_DIR / "package.yml"
+PLUGIN_MANIFEST = REPO_ROOT / ".claude-plugin" / "plugin.json"
 
 # YAML 1.1 では裸の `on` が真偽値 True として読まれる。
 ON_KEY = True
@@ -30,12 +32,12 @@ def collect_steps(workflow: dict[str, Any]) -> list[dict[str, Any]]:
     return [step for job in workflow["jobs"].values() for step in job.get("steps", [])]
 
 
-@pytest.mark.parametrize("path", [CI_WORKFLOW, BASELINE_WORKFLOW])
+@pytest.mark.parametrize("path", [CI_WORKFLOW, BASELINE_WORKFLOW, PACKAGE_WORKFLOW])
 def test_workflow_is_valid_yaml(path: Path) -> None:
     assert isinstance(load_workflow(path), dict)
 
 
-@pytest.mark.parametrize("path", [CI_WORKFLOW, BASELINE_WORKFLOW])
+@pytest.mark.parametrize("path", [CI_WORKFLOW, BASELINE_WORKFLOW, PACKAGE_WORKFLOW])
 def test_every_action_reference_is_version_pinned(path: Path) -> None:
     unpinned = [
         step["uses"]
@@ -54,11 +56,12 @@ def test_ci_workflow_runs_the_single_verification_entry_point() -> None:
     assert any("scripts/verify.sh" in command for command in commands)
 
 
-def test_baseline_workflow_runs_weekly_and_on_demand() -> None:
+def test_baseline_workflow_runs_on_demand_only() -> None:
+    """定期実行は当面止めてあり、手動起動だけを受け付ける。"""
     triggers = load_workflow(BASELINE_WORKFLOW)[ON_KEY]
 
-    assert "schedule" in triggers
     assert "workflow_dispatch" in triggers
+    assert "schedule" not in triggers
 
 
 def test_baseline_workflow_authenticates_with_the_subscription_token() -> None:
@@ -172,3 +175,82 @@ def test_windows_powershell_step_does_not_branch_on_lastexitcode() -> None:
 
     assert steps
     assert [step for step in steps if "$LASTEXITCODE" in step.get("run", "")] == []
+
+
+def plugin_version() -> str:
+    """配布物に付くバージョンを返す。"""
+    return json.loads(PLUGIN_MANIFEST.read_text(encoding="utf-8"))["version"]
+
+
+def test_package_workflow_is_triggered_only_by_tag_pushes() -> None:
+    triggers = load_workflow(PACKAGE_WORKFLOW)[ON_KEY]
+
+    assert list(triggers) == ["push"]
+    assert triggers["push"]["tags"] == ["v*"]
+
+
+def test_package_workflow_builds_with_the_verification_included() -> None:
+    """package.sh は既定で verify.sh を通す。--skip-check を渡してはならない。"""
+    commands = [
+        step.get("run", "") for step in collect_steps(load_workflow(PACKAGE_WORKFLOW))
+    ]
+
+    assert any("scripts/package.sh" in command for command in commands)
+    assert [command for command in commands if "--skip-check" in command] == []
+
+
+def test_package_workflow_uploads_the_archive_named_after_the_version() -> None:
+    step = find_step(load_workflow(PACKAGE_WORKFLOW), "Upload the distribution archive")
+
+    assert step["uses"].startswith("actions/upload-artifact@")
+    assert "${{ steps.version.outputs.version }}" in step["with"]["name"]
+    assert "${{ steps.version.outputs.version }}" in step["with"]["path"]
+    assert step["with"]["if-no-files-found"] == "error"
+
+
+def run_tag_check(
+    tag: str, tmp_path: Path
+) -> tuple[subprocess.CompletedProcess[str], Path]:
+    """タグ照合ステップのシェル処理を定義のまま実行する。"""
+    github_output = tmp_path / "github-output"
+    github_output.touch()
+    run_script = find_step(
+        load_workflow(PACKAGE_WORKFLOW), "Check the tag against the plugin version"
+    )["run"]
+
+    result = subprocess.run(
+        ["bash", "-c", run_script],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+        env={
+            **os.environ,
+            "TAG_NAME": tag,
+            "GITHUB_OUTPUT": str(github_output),
+        },
+    )
+    return result, github_output
+
+
+def test_package_workflow_publishes_the_version_when_the_tag_matches(
+    tmp_path: Path,
+) -> None:
+    version = plugin_version()
+
+    result, github_output = run_tag_check(f"v{version}", tmp_path)
+
+    assert result.returncode == 0, result.stderr
+    assert github_output.read_text(encoding="utf-8").splitlines() == [
+        f"version={version}"
+    ]
+
+
+def test_package_workflow_stops_when_the_tag_disagrees_with_the_version(
+    tmp_path: Path,
+) -> None:
+    """タグと配布物のバージョンがずれたまま配ると、誤った版が出回る。"""
+    result, _ = run_tag_check("v0.0.0", tmp_path)
+
+    assert result.returncode != 0
+    assert plugin_version() in result.stderr

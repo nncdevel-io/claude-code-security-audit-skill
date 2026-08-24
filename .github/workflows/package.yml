@@ -1,0 +1,50 @@
+name: Package
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
+
+      # markdownlint-cli2 はローカルと同じ版に固定する。
+      # shellcheck は ubuntu-latest に同梱されている。
+      - name: Install markdownlint-cli2
+        run: npm install -g markdownlint-cli2@0.20.0
+
+      # タグと配布物のバージョンがずれると、誤った版が出回る。
+      # バージョンの取り出し方は scripts/package.sh と同じにする。
+      - name: Check the tag against the plugin version
+        id: version
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          version="$(python3 -c 'import json; print(json.load(open(".claude-plugin/plugin.json"))["version"])')"
+          if [ "$TAG_NAME" != "v$version" ]; then
+            echo "タグ $TAG_NAME は plugin.json の version $version と一致しません" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # package.sh は既定で scripts/verify.sh を通す。壊れたものを配らないため
+      # --skip-check は付けない。
+      - name: Build the distribution archive
+        run: ./scripts/package.sh
+
+      - name: Upload the distribution archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: claude-code-security-audit-${{ steps.version.outputs.version }}
+          path: dist/claude-code-security-audit-${{ steps.version.outputs.version }}.zip
+          if-no-files-found: error

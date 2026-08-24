@@ -1,9 +1,10 @@
 name: Baseline update
 
 on:
-  schedule:
-    # 毎週月曜 00:00 UTC
-    - cron: "0 0 * * 1"
+  # 定期実行は当面止め、手動起動だけで運用する。再開するときは次を戻す。
+  # schedule:
+  #   # 毎週月曜 00:00 UTC
+  #   - cron: "0 0 * * 1"
   workflow_dispatch:
 
 permissions:
