@@ -1,12 +1,9 @@
 # Claude Code セキュリティ設定監査
 
-ご利用中の Claude Code の設定について、公式セキュリティドキュメントの要件
+ご利用中の Claude Code の設定について、[公式セキュリティドキュメント](https://code.claude.com/docs/ja/security)の要件
 への対応状況と改善方法をレポートするスキルです。
 
-- 公式セキュリティドキュメント
-  <https://code.claude.com/docs/en/security.md>
-
-インストール手順は、配布物の `skills/INSTALL.md` をご覧ください。
+インストール手順は `INSTALL.md` をご覧ください。
 
 ## 起動する
 

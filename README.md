@@ -11,6 +11,8 @@ GitHub Actions が検知して更新のプルリクエストを作る。起動�
 ```text
 .claude-plugin/          プラグインとマーケットプレースの定義
 skills/
+  README.md              利用者向けの使い方
+  INSTALL.md             配布物からの導入手順
   security-audit/        ディレクトリー名が /security-audit になる
     SKILL.md             監査の手順。判定基準は持たない
     references/
@@ -20,8 +22,6 @@ skills/
     scripts/
       collect_config.py  設定を読み取り専用で収集する
       collect_config.ps1 同じ内容のPowerShell実装（Python不要）
-    README.md            利用者向けの使い方
-    INSTALL.md           配布物からの導入手順
 baseline/                基準の生成側。配布物には含まない
   generate.md            要件化の手順書
   requirements-format.md 要件ファイルのフォーマット仕様
@@ -78,9 +78,9 @@ scripts/
 | `--link` | コピーではなくシンボリックリンクを張る（開発用） |
 | `--force` | 同名のスキルがあっても置き換える |
 
-配布用アーカイブを受け取った場合の手順は
-`skills/security-audit/INSTALL.md` にある。ユーザースキル、プロジェクトスキル、
-`--add-dir` の 3 通りを、Windows と macOS / Linux に分けて載せてある。
+配布用アーカイブを受け取った場合の手順は `skills/INSTALL.md` にある。
+ユーザースキル、プロジェクトスキル、`--add-dir` の 3 通りを、Windows と
+macOS / Linux に分けて載せてある。
 
 ## 配布
 
@@ -93,8 +93,8 @@ scripts/
 ```
 
 `dist/claude-code-security-audit-<version>.zip` ができる。利用者向けの
-`README.md` と `INSTALL.md` はスキルの直下に置いてあり、アーカイブでは
-その 2 つをルートにも複製する。開発向けのこのファイルは配らない。
+`skills/README.md` と `skills/INSTALL.md` は配置対象の外に置いてあり、
+インストール先へは運ばれない。開発向けのこのファイルは配らない。
 `INSTALL.md` の `<version>` は同梱時に実際の版へ置き換える。
 
 CI でも同じものを作る。`.claude-plugin/plugin.json` の `version` と同じ名前で

@@ -5,7 +5,6 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 plugin_name="claude-code-security-audit"
-skill_name="security-audit"
 manifest="$repo_root/.claude-plugin/plugin.json"
 output_dir="$repo_root/dist"
 skip_check=false
@@ -72,16 +71,9 @@ while IFS= read -r -d '' file; do
   cp "$repo_root/$file" "$package_root/$file"
 done < <(git -C "$repo_root" ls-files -z -- .claude-plugin skills)
 
-skill_dir="$package_root/skills/$skill_name"
-
 # 受け取った人が読み替えずに済むよう、手順の <version> を実際の版に変える。
-sed "s/<version>/$version/g" "$repo_root/skills/$skill_name/INSTALL.md" \
-  > "$skill_dir/INSTALL.md"
-
-# 展開した直後に読めるよう、利用者向けの 2 つをルートにも置く。リポジトリーの
-# README.md は開発側の話なので配らない。
-cp "$skill_dir/README.md" "$package_root/README.md"
-cp "$skill_dir/INSTALL.md" "$package_root/INSTALL.md"
+sed "s/<version>/$version/g" "$repo_root/skills/INSTALL.md" \
+  > "$package_root/skills/INSTALL.md"
 
 rm -f "$archive"
 (cd "$staging" && zip -rq "$archive" "$plugin_name")

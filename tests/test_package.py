@@ -14,8 +14,8 @@ PLUGIN_MANIFEST = REPO_ROOT / ".claude-plugin" / "plugin.json"
 MARKETPLACE_MANIFEST = REPO_ROOT / ".claude-plugin" / "marketplace.json"
 PLUGIN_NAME = "claude-code-security-audit"
 SKILL_DIR_NAME = "security-audit"
-SKILL_README = REPO_ROOT / "skills" / SKILL_DIR_NAME / "README.md"
-SKILL_INSTALL = REPO_ROOT / "skills" / SKILL_DIR_NAME / "INSTALL.md"
+SKILLS_README = REPO_ROOT / "skills" / "README.md"
+SKILLS_INSTALL = REPO_ROOT / "skills" / "INSTALL.md"
 
 
 def read_json(path: Path) -> dict:
@@ -101,22 +101,30 @@ def test_package_archive_contains_the_installation_guide(tmp_path: Path) -> None
 
     with zipfile.ZipFile(tmp_path / f"{PLUGIN_NAME}-{version}.zip") as archive:
         names = set(archive.namelist())
-    assert f"{PLUGIN_NAME}/INSTALL.md" in names
+    assert f"{PLUGIN_NAME}/skills/INSTALL.md" in names
 
 
-def test_package_archive_ships_the_usage_readme_not_the_project_one(
+def test_package_archive_ships_the_usage_documents_only_with_the_skill(
     tmp_path: Path,
 ) -> None:
-    """リポジトリーの README.md は開発側の話で、受け取った人には要らない。"""
+    """人が読む文書はスキルの外側に置く。
+
+    配置対象の中に入れると、インストール先へ一緒に運ばれてしまう。
+    複製もしない。リポジトリーの README.md（開発側の話）も配らない。
+    """
     version = read_json(PLUGIN_MANIFEST)["version"]
 
     run_package("--output", str(tmp_path), "--skip-check")
 
     with zipfile.ZipFile(tmp_path / f"{PLUGIN_NAME}-{version}.zip") as archive:
-        shipped = archive.read(f"{PLUGIN_NAME}/README.md").decode("utf-8")
+        names = set(archive.namelist())
+        shipped = archive.read(f"{PLUGIN_NAME}/skills/README.md").decode("utf-8")
 
-    assert shipped == SKILL_README.read_text(encoding="utf-8")
-    assert shipped != (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    assert f"{PLUGIN_NAME}/README.md" not in names
+    assert f"{PLUGIN_NAME}/INSTALL.md" not in names
+    assert f"{PLUGIN_NAME}/skills/{SKILL_DIR_NAME}/INSTALL.md" not in names
+    assert f"{PLUGIN_NAME}/skills/{SKILL_DIR_NAME}/README.md" not in names
+    assert shipped == SKILLS_README.read_text(encoding="utf-8")
 
 
 def test_package_archive_resolves_the_version_placeholder_in_the_guide(
@@ -128,18 +136,11 @@ def test_package_archive_resolves_the_version_placeholder_in_the_guide(
     run_package("--output", str(tmp_path), "--skip-check")
 
     with zipfile.ZipFile(tmp_path / f"{PLUGIN_NAME}-{version}.zip") as archive:
-        guides = [
-            archive.read(name).decode("utf-8")
-            for name in (
-                f"{PLUGIN_NAME}/INSTALL.md",
-                f"{PLUGIN_NAME}/skills/{SKILL_DIR_NAME}/INSTALL.md",
-            )
-        ]
+        guide = archive.read(f"{PLUGIN_NAME}/skills/INSTALL.md").decode("utf-8")
 
-    assert "<version>" in SKILL_INSTALL.read_text(encoding="utf-8")
-    for guide in guides:
-        assert "<version>" not in guide
-        assert f"{PLUGIN_NAME}-{version}.zip" in guide
+    assert "<version>" in SKILLS_INSTALL.read_text(encoding="utf-8")
+    assert "<version>" not in guide
+    assert f"{PLUGIN_NAME}-{version}.zip" in guide
 
 
 def test_package_archive_ships_only_files_tracked_by_git(tmp_path: Path) -> None:
@@ -159,13 +160,9 @@ def test_package_archive_ships_only_files_tracked_by_git(tmp_path: Path) -> None
 
     # 空のディレクトリーも zip に残る。ファイルだけを見ると、未追跡の
     # ディレクトリーが混ざっていても気づけない。
-    # ルートの README.md と INSTALL.md はスキル配下の同名ファイルの複製で、
-    # 追跡パスと一対一には対応しない。この 2 つだけは例外として許す。
-    allowed = (
-        tracked
-        | {str(parent) for name in tracked for parent in Path(name).parents}
-        | {"README.md", "INSTALL.md"}
-    )
+    allowed = tracked | {
+        str(parent) for name in tracked for parent in Path(name).parents
+    }
 
     with zipfile.ZipFile(tmp_path / f"{PLUGIN_NAME}-{version}.zip") as archive:
         shipped = {

@@ -6,11 +6,14 @@
 
 ```text
 claude-code-security-audit/
-  INSTALL.md
-  README.md
   .claude-plugin/
   skills/
+    INSTALL.md          このファイル
+    README.md           使い方
     security-audit/     ← これを配置します
+      SKILL.md
+      references/
+      scripts/
 ```
 
 置いたディレクトリー名がそのままコマンド名になります。`security-audit`

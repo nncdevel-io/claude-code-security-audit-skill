@@ -14,10 +14,9 @@
 - 2 実装の出力を突き合わせるパリティテストと、`windows-latest` の CI ジョブ
 - `v<version>` タグの push で配布用アーカイブを作る CI ワークフロー。
   タグと `plugin.json` の `version` が一致しないときは失敗させる
-- 利用者向けの `skills/security-audit/README.md` と
-  `skills/security-audit/INSTALL.md`。アーカイブではルートにも複製する。
-  導入手順は Windows と macOS / Linux に分けて載せ、同梱時に `<version>` を
-  実際の版へ置き換える
+- 利用者向けの `skills/README.md` と `skills/INSTALL.md`。配置対象の外に
+  置き、インストール先へは運ばれないようにした。導入手順は Windows と
+  macOS / Linux に分けて載せ、同梱時に `<version>` を実際の版へ置き換える
 
 ### 修正
 
