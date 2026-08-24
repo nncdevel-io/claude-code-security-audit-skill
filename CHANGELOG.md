@@ -14,6 +14,10 @@
 - 2 実装の出力を突き合わせるパリティテストと、`windows-latest` の CI ジョブ
 - `v<version>` タグの push で配布用アーカイブを作る CI ワークフロー。
   タグと `plugin.json` の `version` が一致しないときは失敗させる
+- 利用者向けの `skills/security-audit/README.md` と
+  `skills/security-audit/INSTALL.md`。アーカイブではルートにも複製する。
+  導入手順は Windows と macOS / Linux に分けて載せ、同梱時に `<version>` を
+  実際の版へ置き換える
 
 ### 修正
 
@@ -22,6 +26,10 @@
 - 取得スクリプトの User-Agent が既定のままで、取得先に 403 で拒否されていた
 - `managed-mcp.json` を収集しておらず、定義済みの MCP を未定義と誤判定していた
 - 収集手順で引数を省略するとスキル自身が監査対象になっていた
+- `scripts/package.sh` が作業ツリーの未追跡ファイルまで配布物へ含めて
+  いた。git が追跡しているファイルだけを同梱するよう変更
+- 配布物にリポジトリーの `README.md`（開発手順やベースライン生成の説明）を
+  含めていた。利用者向けの README に差し替え
 - `collect_config.ps1` が BOM なし UTF-8 だったため、日本語版 Windows の
   Windows PowerShell 5.1 が CP932 として読み、日本語コメントが直後の改行を
   飲み込んで構文エラーになっていた。UTF-8 BOM 付きに変更

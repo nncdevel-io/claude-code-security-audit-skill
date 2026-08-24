@@ -20,6 +20,8 @@ skills/
     scripts/
       collect_config.py  設定を読み取り専用で収集する
       collect_config.ps1 同じ内容のPowerShell実装（Python不要）
+    README.md            利用者向けの使い方
+    INSTALL.md           配布物からの導入手順
 baseline/                基準の生成側。配布物には含まない
   generate.md            要件化の手順書
   requirements-format.md 要件ファイルのフォーマット仕様
@@ -61,7 +63,8 @@ scripts/
 
 ## インストール
 
-### スキルとして配置する
+このリポジトリーをクローンできるなら、`scripts/install.sh` が
+`skills/security-audit/` をスキルディレクトリーへ配置する。
 
 ```bash
 ./scripts/install.sh
@@ -75,26 +78,32 @@ scripts/
 | `--link` | コピーではなくシンボリックリンクを張る（開発用） |
 | `--force` | 同名のスキルがあっても置き換える |
 
-### プラグインとして導入する
+配布用アーカイブを受け取った場合の手順は
+`skills/security-audit/INSTALL.md` にある。ユーザースキル、プロジェクトスキル、
+`--add-dir` の 3 通りを、Windows と macOS / Linux に分けて載せてある。
 
-```text
-/plugin marketplace add t-izuno/claude-code-security-audit-skill
-/plugin install claude-code-security-audit@izuno-claude-plugins
-```
+## 配布
 
 配布用アーカイブを作るときは次のとおり。既定では `scripts/verify.sh` を
-通してからまとめる。
+通してからまとめる。同梱するのは git が追跡しているファイルだけで、
+作業ツリーに落ちている未追跡のファイルは含めない。
 
 ```bash
 ./scripts/package.sh
 ```
 
-`dist/claude-code-security-audit-<version>.zip` ができる。
+`dist/claude-code-security-audit-<version>.zip` ができる。利用者向けの
+`README.md` と `INSTALL.md` はスキルの直下に置いてあり、アーカイブでは
+その 2 つをルートにも複製する。開発向けのこのファイルは配らない。
+`INSTALL.md` の `<version>` は同梱時に実際の版へ置き換える。
 
 CI でも同じものを作る。`.claude-plugin/plugin.json` の `version` と同じ名前で
 `v<version>` のタグを押すと、`.github/workflows/package.yml` が
 `scripts/package.sh` を実行し、アーカイブをワークフローの成果物として残す。
 タグとバージョンが食い違うときは、配る前に失敗させる。
+
+マーケットプレースはまだ公開していないため、プラグインとしての導入は
+提供していない。
 
 ## ベースラインの更新
 

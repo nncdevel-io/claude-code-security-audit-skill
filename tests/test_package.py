@@ -14,6 +14,8 @@ PLUGIN_MANIFEST = REPO_ROOT / ".claude-plugin" / "plugin.json"
 MARKETPLACE_MANIFEST = REPO_ROOT / ".claude-plugin" / "marketplace.json"
 PLUGIN_NAME = "claude-code-security-audit"
 SKILL_DIR_NAME = "security-audit"
+SKILL_README = REPO_ROOT / "skills" / SKILL_DIR_NAME / "README.md"
+SKILL_INSTALL = REPO_ROOT / "skills" / SKILL_DIR_NAME / "INSTALL.md"
 
 
 def read_json(path: Path) -> dict:
@@ -89,6 +91,88 @@ def test_package_archive_contains_the_manifests_skill_and_baseline(
     assert f"{PLUGIN_NAME}/skills/{SKILL_DIR_NAME}/SKILL.md" in names
     assert f"{PLUGIN_NAME}/skills/{SKILL_DIR_NAME}/scripts/collect_config.py" in names
     assert f"{PLUGIN_NAME}/skills/{SKILL_DIR_NAME}/references/requirements.md" in names
+
+
+def test_package_archive_contains_the_installation_guide(tmp_path: Path) -> None:
+    """導入手順は配布物だけを受け取った人にも届く必要がある。"""
+    version = read_json(PLUGIN_MANIFEST)["version"]
+
+    run_package("--output", str(tmp_path), "--skip-check")
+
+    with zipfile.ZipFile(tmp_path / f"{PLUGIN_NAME}-{version}.zip") as archive:
+        names = set(archive.namelist())
+    assert f"{PLUGIN_NAME}/INSTALL.md" in names
+
+
+def test_package_archive_ships_the_usage_readme_not_the_project_one(
+    tmp_path: Path,
+) -> None:
+    """リポジトリーの README.md は開発側の話で、受け取った人には要らない。"""
+    version = read_json(PLUGIN_MANIFEST)["version"]
+
+    run_package("--output", str(tmp_path), "--skip-check")
+
+    with zipfile.ZipFile(tmp_path / f"{PLUGIN_NAME}-{version}.zip") as archive:
+        shipped = archive.read(f"{PLUGIN_NAME}/README.md").decode("utf-8")
+
+    assert shipped == SKILL_README.read_text(encoding="utf-8")
+    assert shipped != (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+
+
+def test_package_archive_resolves_the_version_placeholder_in_the_guide(
+    tmp_path: Path,
+) -> None:
+    """受け取った人がそのまま実行できるよう、版番号は実際の値にする。"""
+    version = read_json(PLUGIN_MANIFEST)["version"]
+
+    run_package("--output", str(tmp_path), "--skip-check")
+
+    with zipfile.ZipFile(tmp_path / f"{PLUGIN_NAME}-{version}.zip") as archive:
+        guides = [
+            archive.read(name).decode("utf-8")
+            for name in (
+                f"{PLUGIN_NAME}/INSTALL.md",
+                f"{PLUGIN_NAME}/skills/{SKILL_DIR_NAME}/INSTALL.md",
+            )
+        ]
+
+    assert "<version>" in SKILL_INSTALL.read_text(encoding="utf-8")
+    for guide in guides:
+        assert "<version>" not in guide
+        assert f"{PLUGIN_NAME}-{version}.zip" in guide
+
+
+def test_package_archive_ships_only_files_tracked_by_git(tmp_path: Path) -> None:
+    """作業ツリーに落ちている未追跡のファイルを配ってしまわないこと。"""
+    version = read_json(PLUGIN_MANIFEST)["version"]
+    tracked = set(
+        subprocess.run(
+            ["git", "ls-files"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.splitlines()
+    )
+
+    run_package("--output", str(tmp_path), "--skip-check")
+
+    # 空のディレクトリーも zip に残る。ファイルだけを見ると、未追跡の
+    # ディレクトリーが混ざっていても気づけない。
+    # ルートの README.md と INSTALL.md はスキル配下の同名ファイルの複製で、
+    # 追跡パスと一対一には対応しない。この 2 つだけは例外として許す。
+    allowed = (
+        tracked
+        | {str(parent) for name in tracked for parent in Path(name).parents}
+        | {"README.md", "INSTALL.md"}
+    )
+
+    with zipfile.ZipFile(tmp_path / f"{PLUGIN_NAME}-{version}.zip") as archive:
+        shipped = {
+            name[len(PLUGIN_NAME) + 1 :].rstrip("/") for name in archive.namelist()
+        } - {""}
+
+    assert shipped <= allowed
 
 
 def test_package_archive_excludes_python_cache_and_generation_side_files(
