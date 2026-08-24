@@ -1,0 +1,31 @@
+{
+  "_comment": "Claude Code の設定ファイルの場所。OS 依存の値をコードから外に出したもの。出典の記述が変わったらこのファイルだけを直す。",
+  "source_url": "https://code.claude.com/docs/en/settings.md",
+  "retrieved_at": "2026-08-22",
+  "platforms": {
+    "Darwin": {
+      "managed_settings": "/Library/Application Support/ClaudeCode/managed-settings.json",
+      "managed_settings_dir": "/Library/Application Support/ClaudeCode/managed-settings.d",
+      "managed_mcp": "/Library/Application Support/ClaudeCode/managed-mcp.json"
+    },
+    "Linux": {
+      "managed_settings": "/etc/claude-code/managed-settings.json",
+      "managed_settings_dir": "/etc/claude-code/managed-settings.d",
+      "managed_mcp": "/etc/claude-code/managed-mcp.json"
+    },
+    "Windows": {
+      "managed_settings": "C:\\Program Files\\ClaudeCode\\managed-settings.json",
+      "managed_settings_dir": "C:\\Program Files\\ClaudeCode\\managed-settings.d",
+      "managed_mcp": "C:\\Program Files\\ClaudeCode\\managed-mcp.json"
+    }
+  },
+  "home_relative": {
+    "user_settings": ".claude/settings.json",
+    "user_state": ".claude.json"
+  },
+  "project_relative": {
+    "project_settings": ".claude/settings.json",
+    "local_settings": ".claude/settings.local.json",
+    "project_mcp": ".mcp.json"
+  }
+}

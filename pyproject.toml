@@ -1,0 +1,51 @@
+# [build-system] を定義しないため、uv はこのプロジェクト自体をビルド・
+# インストールせず、依存のみを環境に入れる。配布物はスキルのディレクトリー
+# であってパッケージではないので、それが望ましい。
+[project]
+name = "claude-code-security-audit"
+version = "0.1.0"
+description = "Claude Code のセキュリティ設定を要件ファイルと突合して監査するスキル"
+requires-python = ">=3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4",
+    "ruff>=0.14",
+    # ワークフロー定義を手元で検証するために使う。実行時の依存ではない。
+    "pyyaml>=6.0",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+# isort がスクリプト群を第一者モジュールとして扱えるようにする。
+# pytest の pythonpath と同じ場所を指す。
+src = [
+    "baseline",
+    "skills/security-audit/scripts",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle error
+    "F",   # pyflakes
+    "W",   # pycodestyle warning
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "RUF", # ruff 固有
+]
+# 日本語の文章では全角括弧を使う。RUF001/002/003 の紛らわしい文字の
+# 検出対象から外す。
+allowed-confusables = ["（", "）"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# スキルとベースラインのスクリプトはパッケージ化しないため、
+# import できるようにテスト実行時のパスへ加える。
+pythonpath = [
+    "baseline",
+    "skills/security-audit/scripts",
+]

@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+
+      # markdownlint-cli2 はローカルと同じ版に固定する。
+      # shellcheck は ubuntu-latest に同梱されている。
+      - name: Install markdownlint-cli2
+        run: npm install -g markdownlint-cli2@0.20.0
+
+      - name: Run verify
+        run: ./scripts/verify.sh
+
+  # PowerShell 版の収集スクリプトは Windows でしか本番の条件で動かせない。
+  # 2 実装がずれていないことを、実際の Windows 上で突き合わせて確かめる。
+  parity-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+
+      - name: Show PowerShell versions
+        shell: pwsh
+        run: |
+          $PSVersionTable | Format-List
+          powershell -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'
+
+      - name: Run the collector parity tests
+        run: uv run pytest tests/test_collector_parity.py -v
+
+      - name: Run the collector on Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          .\skills\security-audit\scripts\collect_config.ps1 . | ConvertFrom-Json | Out-Null
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Write-Host "Windows PowerShell 5.1 で実行できた"

@@ -1,0 +1,42 @@
+# 変更履歴
+
+このファイルの書式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)
+に従い、バージョンは [セマンティックバージョニング](https://semver.org/lang/ja/)
+に従う。
+
+## [未リリース]
+
+### 追加
+
+- 収集スクリプトの PowerShell 実装。Python を導入せずに Windows で監査できる
+- OS 依存パスを `references/paths.json` へ外出し
+- `managed-settings.d` の断片と契約種別（`account`）の収集
+- 2 実装の出力を突き合わせるパリティテストと、`windows-latest` の CI ジョブ
+
+### 修正
+
+- Windows の managed 設定パスが v2.1.75 で廃止された `C:\ProgramData` を
+  指していた。`C:\Program Files\ClaudeCode` に修正
+- 取得スクリプトの User-Agent が既定のままで、取得先に 403 で拒否されていた
+- `managed-mcp.json` を収集しておらず、定義済みの MCP を未定義と誤判定していた
+- 収集手順で引数を省略するとスキル自身が監査対象になっていた
+
+## [0.1.0] - 2026-08-21
+
+### 追加
+
+- 監査スキル `security-audit`。`/security-audit` で明示的に起動する
+  コマンド専用スキルで、自然言語では起動しない。設定を読み取り専用で
+  収集する `collect_config.py` と、要件との突合手順を定めた `SKILL.md`
+- 公式セキュリティドキュメント（2026-08-21 取得）から起こした
+  同梱ベースライン。要件 17 件
+- 基準の生成側の道具。取得と差分検知の `fetch_security_doc.py`、
+  要件化の手順書 `generate.md`、フォーマット仕様
+  `requirements-format.md`、検証の `validate_requirements.py`
+- 配置スクリプト `install.sh` と配布用アーカイブ作成の `package.sh`
+- プラグインとマーケットプレースの定義
+- 週次でベースラインの更新を検知しプルリクエストを作る
+  `baseline-update.yml` と、lint とテストを実行する `ci.yml`
+
+[未リリース]: https://github.com/t-izuno/claude-code-security-audit-skill/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/t-izuno/claude-code-security-audit-skill/releases/tag/v0.1.0

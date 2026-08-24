@@ -1,0 +1,15 @@
+{
+  "name": "izuno-claude-plugins",
+  "owner": {
+    "name": "t-izuno",
+    "url": "https://github.com/t-izuno"
+  },
+  "description": "t-izuno が公開する Claude Code プラグイン",
+  "plugins": [
+    {
+      "name": "claude-code-security-audit",
+      "source": "./",
+      "description": "Claude Code のセキュリティ設定を要件ファイルと突合して監査する"
+    }
+  ]
+}

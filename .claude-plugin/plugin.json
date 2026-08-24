@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "claude-code-security-audit",
+  "description": "Claude Code のセキュリティ設定を要件ファイルと突合して監査する",
+  "version": "0.1.0",
+  "author": {
+    "name": "t-izuno"
+  },
+  "repository": "https://github.com/t-izuno/claude-code-security-audit-skill",
+  "license": "MIT",
+  "keywords": ["security", "audit", "claude-code"]
+}

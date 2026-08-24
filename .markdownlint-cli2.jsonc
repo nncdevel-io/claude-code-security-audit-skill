@@ -1,0 +1,15 @@
+{
+  "config": {
+    // 表とコードブロックは折り返せないため行長チェックから外す
+    "MD013": { "code_blocks": false, "tables": false },
+    // 構造化文書では同じ見出し（「補足」「注意」など）が繰り返し現れる
+    "MD024": false,
+    // フロントマターの title を h1 として数えない
+    "MD025": { "front_matter_title": "" }
+  },
+  // .gitignore を尊重し、生成物（.venv、各種キャッシュ）を対象外にする
+  "gitignore": true,
+  // baseline/security.md は取得した原文のスナップショット。体裁を整えると
+  // 原文と一致しなくなり SHA256 の比較が成立しないため対象外にする。
+  "ignores": ["node_modules/**", "baseline/security.md"]
+}
