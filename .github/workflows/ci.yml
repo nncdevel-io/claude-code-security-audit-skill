@@ -45,7 +45,9 @@ jobs:
 
       - name: Run the collector on Windows PowerShell 5.1
         shell: powershell
+        # 直接呼び出した .ps1 は $LASTEXITCODE を設定しないため、終了コードでは
+        # 成否を判定できない。失敗時はスクリプト内の $ErrorActionPreference = 'Stop'
+        # が例外を送出し、powershell.exe が 1 で終了する。
         run: |
           .\skills\security-audit\scripts\collect_config.ps1 . | ConvertFrom-Json | Out-Null
-          if ($LASTEXITCODE -ne 0) { exit 1 }
           Write-Host "Windows PowerShell 5.1 で実行できた"

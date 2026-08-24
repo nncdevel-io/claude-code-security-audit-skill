@@ -23,6 +23,9 @@
 - `collect_config.ps1` が BOM なし UTF-8 だったため、日本語版 Windows の
   Windows PowerShell 5.1 が CP932 として読み、日本語コメントが直後の改行を
   飲み込んで構文エラーになっていた。UTF-8 BOM 付きに変更
+- Windows PowerShell 5.1 の CI ステップが `$LASTEXITCODE` で成否を判定して
+  いた。直接呼び出した `.ps1` はこの変数を設定せず、未設定の `$null` は
+  `-ne 0` が真になるため、収集が成功しても常に失敗していた。判定を削除
 
 ## [0.1.0] - 2026-08-21
 

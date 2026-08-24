@@ -155,3 +155,20 @@ def test_baseline_workflow_change_detection_step_publishes_step_outputs(
         "changed=true",
         "baseline_version=2026-08-21-00000000",
     ]
+
+
+def test_windows_powershell_step_does_not_branch_on_lastexitcode() -> None:
+    """直接呼び出した .ps1 は $LASTEXITCODE を設定しない。
+
+    未設定の $LASTEXITCODE は $null で、`$null -ne 0` は真になる。判定を置くと
+    収集が成功しても必ず exit 1 になり、ジョブが常に落ちる。失敗の検知は
+    スクリプト内の $ErrorActionPreference = 'Stop' が送出する例外に任せる。
+    """
+    steps = [
+        step
+        for step in collect_steps(load_workflow(CI_WORKFLOW))
+        if step.get("shell") == "powershell"
+    ]
+
+    assert steps
+    assert [step for step in steps if "$LASTEXITCODE" in step.get("run", "")] == []
