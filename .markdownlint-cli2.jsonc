@@ -9,7 +9,11 @@
   },
   // .gitignore を尊重し、生成物（.venv、各種キャッシュ）を対象外にする
   "gitignore": true,
-  // baseline/security.md は取得した原文のスナップショット。体裁を整えると
-  // 原文と一致しなくなり SHA256 の比較が成立しないため対象外にする。
-  "ignores": ["node_modules/**", "baseline/security.md"]
+  // baseline 直下の *.md のうち取得した原文のスナップショットは、体裁を
+  // 整えると原文と一致しなくなり SHA256 の比較が成立しないため対象外にする。
+  "ignores": [
+    "node_modules/**",
+    "baseline/security.md",
+    "baseline/sandboxing.md"
+  ]
 }

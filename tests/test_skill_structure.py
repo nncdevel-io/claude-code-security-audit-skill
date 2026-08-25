@@ -101,8 +101,25 @@ def test_skill_declares_its_arguments_for_command_invocation() -> None:
     assert front_matter["argument-hint"]
 
 
-def test_bundled_baseline_matches_the_stored_snapshot() -> None:
-    snapshot = (REPO_ROOT / "baseline" / "security.md").read_text(encoding="utf-8")
+def read_stored_snapshots() -> list[fetch_security_doc.FetchedSource]:
+    """`baseline/` に保存された全出典を取得結果の形で読み出す。"""
+    fetched: list[fetch_security_doc.FetchedSource] = []
+    for source in fetch_security_doc.DEFAULT_SOURCES:
+        snapshot_path = REPO_ROOT / "baseline" / source.snapshot_name
+        text = snapshot_path.read_text(encoding="utf-8")
+        fetched.append(
+            fetch_security_doc.FetchedSource(
+                url=source.url,
+                snapshot_path=snapshot_path,
+                text=text,
+                content_sha256=fetch_security_doc.compute_sha256(text),
+                changed=False,
+            )
+        )
+    return fetched
+
+
+def test_bundled_baseline_matches_the_stored_snapshots() -> None:
     front_matter, _ = validate_requirements.parse_front_matter(
         BUNDLED_REQUIREMENTS.read_text(encoding="utf-8")
     )
@@ -110,8 +127,20 @@ def test_bundled_baseline_matches_the_stored_snapshot() -> None:
         front_matter["retrieved_at"], front_matter["content_sha256"]
     )
 
-    assert front_matter["content_sha256"] == fetch_security_doc.compute_sha256(snapshot)
+    assert front_matter["content_sha256"] == (
+        fetch_security_doc.compute_combined_sha256(read_stored_snapshots())
+    )
     assert front_matter["baseline_version"] == expected_version
+
+
+def test_bundled_baseline_lists_every_source_it_was_generated_from() -> None:
+    front_matter, _ = validate_requirements.parse_front_matter(
+        BUNDLED_REQUIREMENTS.read_text(encoding="utf-8")
+    )
+
+    listed = [url.strip() for url in front_matter["source_urls"].split(",")]
+
+    assert listed == [source.url for source in fetch_security_doc.DEFAULT_SOURCES]
 
 
 def test_collector_invocation_always_passes_an_audit_target() -> None:

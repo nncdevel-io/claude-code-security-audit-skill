@@ -1,6 +1,6 @@
 # セキュリティ要件ファイルの生成手順
 
-公式セキュリティドキュメントから要件エントリーを起こし、同梱ベースライン
+公式ドキュメントから要件エントリーを起こし、同梱ベースライン
 `skills/security-audit/references/requirements.md` を更新する手順。
 
 この手順は GitHub Actions の `baseline-update.yml` から実行される。手元で
@@ -9,18 +9,32 @@
 ## 前提
 
 `baseline/fetch_security_doc.py --write` が実行済みで、
-`baseline/security.md` に最新の原文が入っていること。取得と要件化を
-1 回の実行で混ぜない。取得は決定的な処理、要件化は判断を伴う処理で、
-再実行時の性質が違うため。
+`baseline/security.md` と `baseline/sandboxing.md` に最新の原文が入って
+いること。取得と要件化を 1 回の実行で混ぜない。取得は決定的な処理、
+要件化は判断を伴う処理で、再実行時の性質が違うため。
 
 ## 入力
 
 | 入力 | 役割 |
 | --- | --- |
-| `baseline/security.md` | 取得した原文。要件の唯一の出典 |
+| `baseline/security.md` | 要件を起こす原文 |
+| `baseline/sandboxing.md` | 適用条件の原文。既存要件の条件付けにだけ使う |
 | `skills/security-audit/references/requirements.md` | 現行のベースライン。要件 ID の対応付けに使う |
 | `baseline/requirements-format.md` | 出力フォーマットの仕様 |
 | `fetch_security_doc.py` の出力 JSON | フロントマターに転記する値 |
+
+### 出典の役割分担
+
+2 つの原文は役割が違う。混ぜて扱わない。
+
+- `security.md`: 要件そのものの出典。新規要件はここからだけ起こす
+- `sandboxing.md`: 適用条件の出典。既存要件がどのプラットフォームで
+  成立するかを `target` に書き足すためだけに使う
+
+`sandboxing.md` から新しい要件を起こしてはならない。サンドボックスの設定
+リファレンスは統制候補が多く、全部を要件化すると監査の焦点がぼやけ、
+判定基準としてのレビューが追いつかなくなるため。この線引きを変えるときは
+この手順書を先に直す。
 
 ## 出力
 
@@ -52,6 +66,15 @@
 原文に無い基準を足さない。原文が曖昧で判定基準に落とせない場合は
 `check: manual` にして、確認手順を `target` に書く。
 
+### 2-1. 適用条件を反映する
+
+`baseline/sandboxing.md` を読み、要件が成立しないプラットフォームがあれば
+その要件の `target` に条件として書く。書き方は既存の REQ-009 に合わせる。
+
+条件を要件に書かず、監査の実行時にその場で判断させてはならない。判定基準は
+要件ファイルだけに置くというスキルの前提が崩れ、同じ設定でも実行のたびに
+判定が変わるため。
+
 ### 3. 要件 ID を対応付ける
 
 要件 ID は過去のレポートとの突合キーなので、振り直してはならない。
@@ -66,8 +89,12 @@
 ### 4. フロントマターを更新する
 
 `fetch_security_doc.py` の出力 JSON から `baseline_version` /
-`source_url` / `retrieved_at` / `content_sha256` をそのまま転記する。
-値を自分で組み立て直さない。
+`retrieved_at` / `content_sha256` をそのまま転記する。値を自分で組み立て
+直さない。`content_sha256` は全出典を束ねた値で、出典 1 件のハッシュでは
+ないため、`sources` の中の値と取り違えない。
+
+`source_urls` には `sources` の `url` を、出力に現れる順のままカンマ区切りで
+並べる。
 
 ### 5. 検証する
 
@@ -86,10 +113,11 @@ markdownlint-cli2 skills/security-audit/references/requirements.md
 
 ## してはいけないこと
 
-- `baseline/security.md` の書き換え。原文のスナップショットであり、
-  取得スクリプトだけが更新する
+- `baseline/security.md` と `baseline/sandboxing.md` の書き換え。原文の
+  スナップショットであり、取得スクリプトだけが更新する
 - 検証スクリプトを通さないままの出力
 - 要件 ID の振り直しや欠番の再利用
 - 原文に根拠が無い要件の追加
+- `baseline/sandboxing.md` を根拠にした新規要件の追加
 - 生成した要件ファイルの自動マージ。判定基準そのものなので、
   人のレビューを必ず通す

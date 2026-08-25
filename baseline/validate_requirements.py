@@ -20,7 +20,7 @@ from pathlib import Path
 FRONT_MATTER_DELIMITER = "---"
 REQUIRED_FRONT_MATTER_KEYS = (
     "baseline_version",
-    "source_url",
+    "source_urls",
     "retrieved_at",
     "content_sha256",
 )

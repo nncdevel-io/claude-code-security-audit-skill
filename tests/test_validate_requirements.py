@@ -10,10 +10,14 @@ import validate_requirements
 
 SAMPLE_SHA256 = "32b8af7562f6007425ab22cab9801d2f2aa93898f3449afd32ee09ca171e396c"
 BASELINE_VERSION = "2026-08-21-32b8af75"
+SOURCE_URLS = (
+    "https://code.claude.com/docs/en/security.md, "
+    "https://code.claude.com/docs/en/sandboxing.md"
+)
 
 VALID_DOCUMENT = f"""---
 baseline_version: {BASELINE_VERSION}
-source_url: https://code.claude.com/docs/en/security.md
+source_urls: {SOURCE_URLS}
 retrieved_at: 2026-08-21
 content_sha256: {SAMPLE_SHA256}
 ---
@@ -99,6 +103,14 @@ def test_validate_rejects_a_missing_baseline_version() -> None:
     errors = validate_requirements.validate(document)
 
     assert any("baseline_version" in error for error in errors)
+
+
+def test_validate_rejects_a_missing_source_urls() -> None:
+    document = replace_line(VALID_DOCUMENT, f"source_urls: {SOURCE_URLS}\n", "")
+
+    errors = validate_requirements.validate(document)
+
+    assert any("source_urls" in error for error in errors)
 
 
 def test_validate_rejects_a_malformed_content_sha256() -> None:

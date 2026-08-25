@@ -11,7 +11,7 @@ Markdown ファイル。冒頭に YAML フロントマターでバージョン�
 ```yaml
 ---
 baseline_version: 2026-08-21-a1b2c3d4
-source_url: https://code.claude.com/docs/en/security.md
+source_urls: https://code.claude.com/docs/en/security.md, https://code.claude.com/docs/en/sandboxing.md
 retrieved_at: 2026-08-21
 content_sha256: a1b2c3d4...（16進64桁）
 ---
@@ -19,10 +19,14 @@ content_sha256: a1b2c3d4...（16進64桁）
 
 | フィールド | 必須 | 意味 |
 | --- | --- | --- |
-| `baseline_version` | 必須 | `取得日-本文SHA256先頭8桁`。レポートに必ず転記する |
-| `source_url` | 必須 | 要件の出典 URL |
+| `baseline_version` | 必須 | `取得日-束ねたSHA256先頭8桁`。レポートに必ず転記する |
+| `source_urls` | 必須 | 要件の出典 URL。複数ある場合はカンマ区切りで並べる |
 | `retrieved_at` | 必須 | 取得日。`YYYY-MM-DD` |
-| `content_sha256` | 必須 | 取得した Markdown 本文のハッシュ。16進64桁 |
+| `content_sha256` | 必須 | 全出典を束ねたハッシュ。16進64桁 |
+
+`content_sha256` は出典 1 件のハッシュではなく、`fetch_security_doc.py` が
+全出典の URL と本文ハッシュから組み立てた値である。どの出典が変わっても
+基準バージョンが動くようにするため、その値をそのまま転記する。
 
 `baseline_version` は `retrieved_at` と `content_sha256` から機械的に決まる。
 両者と食い違う値は検証で落ちる。

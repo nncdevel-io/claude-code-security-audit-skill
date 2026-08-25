@@ -81,7 +81,7 @@ def test_baseline_workflow_regenerates_only_after_a_detected_change() -> None:
     guarded = [step for step in steps if "changed == 'true'" in str(step.get("if", ""))]
 
     assert [step.get("name") for step in guarded] == [
-        "Update the snapshot",
+        "Update the snapshots",
         "Regenerate the baseline with Claude",
         "Validate the regenerated baseline",
         "Open a pull request",
@@ -105,6 +105,7 @@ def test_baseline_workflow_limits_the_pull_request_to_generated_files() -> None:
     )
 
     assert sorted(pull_request["with"]["add-paths"].split()) == [
+        "baseline/sandboxing.md",
         "baseline/security.md",
         "skills/security-audit/references/requirements.md",
     ]
@@ -120,12 +121,24 @@ def test_baseline_workflow_change_detection_step_publishes_step_outputs(
 ) -> None:
     """取得ステップのシェル処理を定義のまま実行し、出力の受け渡しを確認する。"""
     report = {
-        "url": "https://code.claude.com/docs/en/security.md",
         "retrieved_at": "2026-08-21",
         "content_sha256": "0" * 64,
         "baseline_version": "2026-08-21-00000000",
         "changed": True,
-        "snapshot_path": "baseline/security.md",
+        "sources": [
+            {
+                "url": "https://code.claude.com/docs/en/security.md",
+                "snapshot_path": "baseline/security.md",
+                "content_sha256": "1" * 64,
+                "changed": True,
+            },
+            {
+                "url": "https://code.claude.com/docs/en/sandboxing.md",
+                "snapshot_path": "baseline/sandboxing.md",
+                "content_sha256": "2" * 64,
+                "changed": False,
+            },
+        ],
     }
     fake_bin = tmp_path / "bin"
     fake_bin.mkdir()
@@ -137,7 +150,7 @@ def test_baseline_workflow_change_detection_step_publishes_step_outputs(
     fake_uv.chmod(0o755)
     github_output = tmp_path / "github-output"
     run_script = find_step(
-        load_workflow(BASELINE_WORKFLOW), "Check the upstream document for changes"
+        load_workflow(BASELINE_WORKFLOW), "Check the upstream documents for changes"
     )["run"]
 
     result = subprocess.run(

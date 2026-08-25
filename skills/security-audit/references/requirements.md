@@ -1,8 +1,8 @@
 ---
-baseline_version: 2026-08-21-7aba02e7
-source_url: https://code.claude.com/docs/en/security.md
-retrieved_at: 2026-08-21
-content_sha256: 7aba02e7f539d2384954d05443e1ce3ccd4f4b99adf54937b9e623b8fdaa7d25
+baseline_version: 2026-08-25-ea34e534
+source_urls: https://code.claude.com/docs/en/security.md, https://code.claude.com/docs/en/sandboxing.md
+retrieved_at: 2026-08-25
+content_sha256: ea34e534318f20807376a98817721c869636ad9b702b47f1f59558af27968c29
 ---
 
 # Claude Code セキュリティ要件
@@ -15,18 +15,22 @@ content_sha256: 7aba02e7f539d2384954d05443e1ce3ccd4f4b99adf54937b9e623b8fdaa7d25
 
 - category: permission
 - check: config
-- target: `sandbox.enabled` が true であること
+- target: ネイティブ Windows では非該当。それ以外のプラットフォーム
+  （macOS / Linux / WSL2）では `sandbox.enabled` が true であること
 - rationale: サンドボックスはファイルシステムとネットワークを隔離し、
-  権限プロンプトを減らしつつ自律実行の範囲を限定する
+  権限プロンプトを減らしつつ自律実行の範囲を限定する。ネイティブ Windows
+  では動作しないため、公式は WSL2 の中で実行することを勧めている
 
 ## REQ-002: サンドボックスによる認証情報の読み取り制限
 
 - category: permission
 - check: config
-- target: `sandbox.filesystem.denyRead` に認証情報のパス
-  （`~/.ssh`、クラウド認証情報、`*.pem` など）が登録されていること
+- target: ネイティブ Windows では非該当。それ以外のプラットフォーム
+  （macOS / Linux / WSL2）では `sandbox.filesystem.denyRead` に認証情報の
+  パス（`~/.ssh`、クラウド認証情報、`*.pem` など）が登録されていること
 - rationale: 読み取り専用 Bash コマンドは作業ディレクトリー境界の外まで
-  読めるため、denyRead で読み取り範囲を絞る必要がある
+  読めるため、denyRead で読み取り範囲を絞る必要がある。denyRead は
+  サンドボックスが動作するプラットフォームでのみ効く
 
 ## REQ-003: 作業ディレクトリー境界の拡張の妥当性
 

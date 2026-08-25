@@ -21,7 +21,7 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Check the upstream document for changes
+      - name: Check the upstream documents for changes
         id: fetch
         run: |
           uv run python baseline/fetch_security_doc.py --check > fetch-report.json
@@ -31,7 +31,7 @@ jobs:
             echo "baseline_version=$(jq -r .baseline_version fetch-report.json)"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Update the snapshot
+      - name: Update the snapshots
         if: steps.fetch.outputs.changed == 'true'
         run: uv run python baseline/fetch_security_doc.py --write
 
@@ -49,7 +49,7 @@ jobs:
 
             守ること:
             - 変更するのは requirements.md だけ。他のファイルは触らない
-            - baseline/security.md は書き換えない
+            - baseline/security.md と baseline/sandboxing.md は書き換えない
             - 要件 ID を振り直さない
             - コミットやプッシュはしない。差分を作業ツリーに残すだけでよい
           claude_args: --allowed-tools "Read,Edit,Write,Glob,Grep,Bash"
@@ -73,14 +73,17 @@ jobs:
           commit-message: "ベースラインを ${{ steps.fetch.outputs.baseline_version }} へ更新"
           title: "ベースライン更新: ${{ steps.fetch.outputs.baseline_version }}"
           body: |
-            公式セキュリティドキュメントの変更を検知したため、
+            公式ドキュメントの変更を検知したため、
             `baseline/generate.md` の手順でベースラインを再生成しました。
 
             - 基準バージョン: `${{ steps.fetch.outputs.baseline_version }}`
-            - 出典: <https://code.claude.com/docs/en/security.md>
+            - 出典: <https://code.claude.com/docs/en/security.md>、
+              <https://code.claude.com/docs/en/sandboxing.md>
 
             要件の追加・変更・廃止が妥当か、要件 ID が維持されているかを
-            確認してからマージしてください。
+            確認してからマージしてください。sandboxing 側は適用条件の出典で、
+            そこから新規要件が起きていないことも確認してください。
           add-paths: |
             baseline/security.md
+            baseline/sandboxing.md
             skills/security-audit/references/requirements.md
