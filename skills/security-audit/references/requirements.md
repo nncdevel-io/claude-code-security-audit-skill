@@ -1,8 +1,8 @@
 ---
-baseline_version: 2026-08-25-ea34e534
+baseline_version: 2026-09-25-f329e73b
 source_urls: https://code.claude.com/docs/en/security.md, https://code.claude.com/docs/en/sandboxing.md
-retrieved_at: 2026-08-25
-content_sha256: ea34e534318f20807376a98817721c869636ad9b702b47f1f59558af27968c29
+retrieved_at: 2026-09-25
+content_sha256: f329e73bcc057d69f4d45ea983e2659eb7f1a50c070f42ed86ac8d82eeb89cfb
 ---
 
 # Claude Code セキュリティ要件
@@ -74,7 +74,9 @@ content_sha256: ea34e534318f20807376a98817721c869636ad9b702b47f1f59558af27968c29
   `permissions.allow` に無いこと。完全に禁止する方針の場合は
   `permissions.deny` に登録されていること
 - rationale: Web から任意のコンテンツを取得するコマンドは
-  プロンプトインジェクションの主要な経路になる
+  プロンプトインジェクションの主要な経路になる。拒否ルールは書かれた
+  コマンドの文字列に一致するだけなので、コマンドの書き方に依存しない
+  通信の統制はサンドボックスのネットワーク隔離が担う
 
 ## REQ-008: 未信頼コンテンツの取り扱い
 

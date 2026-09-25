@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import ssl
 import sys
 import urllib.error
 import urllib.request
@@ -118,6 +119,23 @@ def build_baseline_version(retrieved_at: str, content_sha256: str) -> str:
     return f"{retrieved_at}-{content_sha256[:VERSION_HASH_LENGTH]}"
 
 
+def build_tls_context() -> ssl.SSLContext:
+    """証明書チェーンとホスト名を検証する TLS コンテキストを返す。
+
+    `ssl.create_default_context()` は Python 3.13 から `VERIFY_X509_STRICT`
+    を立て、AKI 拡張の無い証明書を拒否する。TLS を中継する社内プロキシが
+    発行し直す証明書には AKI の無いものがあり、既定のままでは取得できない。
+    厳格検証だけを外し、信頼する CA は既定（`SSL_CERT_FILE` を含む）のまま
+    読み込む。
+
+    Returns:
+        `CERT_REQUIRED` かつホスト名検証が有効なコンテキスト。
+    """
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.load_default_certs()
+    return context
+
+
 def fetch_document(url: str) -> str:
     """`url` の内容を取得し、UTF-8 として復号した文字列を返す。
 
@@ -133,7 +151,9 @@ def fetch_document(url: str) -> str:
     request = urllib.request.Request(
         url, headers={"Accept": "text/plain", "User-Agent": USER_AGENT}
     )
-    with urllib.request.urlopen(request, timeout=FETCH_TIMEOUT_SECONDS) as response:
+    with urllib.request.urlopen(
+        request, timeout=FETCH_TIMEOUT_SECONDS, context=build_tls_context()
+    ) as response:
         return response.read().decode("utf-8")
 
 

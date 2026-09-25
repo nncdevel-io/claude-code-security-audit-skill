@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import ssl
 from pathlib import Path
 
 import pytest
@@ -215,6 +216,39 @@ def test_fetch_document_decodes_response_as_utf8(
     assert fetch_security_doc.fetch_document("https://example.com/security.md") == (
         SAMPLE_DOCUMENT
     )
+
+
+def test_tls_context_verifies_chain_and_hostname_without_strict_mode() -> None:
+    """TLS 中継プロキシの証明書に AKI が無くても取得でき、検証自体は残る。"""
+    context = fetch_security_doc.build_tls_context()
+
+    assert context.verify_mode == ssl.CERT_REQUIRED
+    assert context.check_hostname is True
+    assert not context.verify_flags & ssl.VERIFY_X509_STRICT
+
+
+def test_fetch_document_uses_tls_context(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeResponse:
+        def read(self) -> bytes:
+            return SAMPLE_DOCUMENT.encode("utf-8")
+
+        def __enter__(self) -> FakeResponse:
+            return self
+
+        def __exit__(self, *_: object) -> None:
+            return None
+
+    def fake_urlopen(_: object, **kwargs: object) -> FakeResponse:
+        captured.update(kwargs)
+        return FakeResponse()
+
+    monkeypatch.setattr(fetch_security_doc.urllib.request, "urlopen", fake_urlopen)
+
+    fetch_security_doc.fetch_document("https://example.com/security.md")
+
+    assert isinstance(captured["context"], ssl.SSLContext)
 
 
 def test_fetch_document_identifies_itself_with_a_user_agent(
